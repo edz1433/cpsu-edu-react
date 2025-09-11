@@ -1,0 +1,38 @@
+/* Add your website styles here */
+
+/* Styles for the cookies popup */
+#cookies-popup {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  font-family: 'Arial', sans-serif;
+}
+
+#cookies-popup p {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+#cookies-popup button {
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+#cookies-popup button:hover {
+  background-color: #00b31e;
+}
