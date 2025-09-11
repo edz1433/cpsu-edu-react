@@ -6,12 +6,11 @@ const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  const [submenu, setSubmenu] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
-  const API_TOKEN = "$2a$12$LWAfyhnpYq2lrDJlsm3YA.25ivExQynX9LghVXoVinHCTf.38cQUe";
-  
+  const API_TOKEN =
+    "$2a$12$LWAfyhnpYq2lrDJlsm3YA.25ivExQynX9LghVXoVinHCTf.38cQUe";
+
   useEffect(() => {
     const fetchMenus = async () => {
       try {
@@ -25,8 +24,6 @@ const Header = () => {
         );
 
         setCategories(data.categories || []);
-        setSubcategories(data.subcategories || []);
-        setSubmenu(data.submenu || []);
       } catch (error) {
         console.error("Error fetching menus:", error);
       }
@@ -77,95 +74,64 @@ const Header = () => {
                     className="collapse navbar-collapse"
                     id="navbarSupportedContent"
                   >
-                  <div className="wrap-submenu">
-                    <ul className="navbar-nav me-auto">
-                      {categories.map((cat) => (
-                        <li
-                          key={cat.id}
-                          className={`nav-item ${cat.hasgrid ? "has-grid" : "active"}`}
-                        >
-                          <a
-                            href="#"
-                            className={`${
-                              cat.isActive ? "active" : ""
-                            } ${location.pathname === "/" && cat.id === 1 ? "active" : ""}`}
+                    <div className="wrap-submenu">
+                      <ul className="navbar-nav me-auto">
+                        {categories.map((cat) => (
+                          <li
+                            key={cat.id}
+                            className={`nav-item ${
+                              cat.hasgrid ? "has-grid" : "active"
+                            }`}
                           >
-                            {cat.cat_name} <i className="fa fa-chevron-right fa-xs submenu-icon"></i>
-                          </a>
+                            <a
+                              href="#"
+                              className={`${
+                                cat.isActive ? "active" : ""
+                              } ${
+                                location.pathname === "/" && cat.id === 1
+                                  ? "active"
+                                  : ""
+                              }`}
+                            >
+                              {cat.cat_name}{" "}
+                              <i className="fa fa-chevron-right fa-xs submenu-icon"></i>
+                            </a>
 
-                          <ul className="sub-menu">
-                            {cat.hasgrid === 2 ? (
-                              // Category has subcategories
-                              subcategories
-                                .filter((subcat) => parseInt(subcat.categories_id) === parseInt(cat.id))
-                                .map((subcat) => (
-                                  <li key={subcat.id}>
-                                    <strong>{subcat.title}</strong>
-                                    <ul>
-                                      {submenu
-                                        .filter((submen) => parseInt(submen.subcategory) === parseInt(subcat.id))
-                                        .map((submen) => (
-                                          <li key={submen.id}>
-                                          <Link
-                                            to={
-                                              submen.url
-                                                ? submen.url
-                                                : submen.title === "About Us"
-                                                ? "/about-us"
-                                                : `/${submen.title.toLowerCase().replace(/\s+/g, "-")}`
-                                            }
-                                            state={{ submenId: submen.id }}
-                                          >
-                                            {submen.title}
-                                          </Link>
-                                          </li>
-                                        ))}
-                                    </ul>
-                                  </li>
-                                ))
-                            ) : (
-                              // Category has direct submenu grouped in pairs
-                              (() => {
-                                const items = submenu.filter(
-                                  (submen) => parseInt(submen.category) === parseInt(cat.id)
-                                );
-                                const grouped = [];
-                                for (let i = 0; i < items.length; i += 2) {
-                                  grouped.push(items.slice(i, i + 2));
-                                }
-                                return grouped.map((group, index) => (
-                                  <li key={index}>
-                                    <ul>
-                                      {group.map((submen) => (
-                                        <li key={submen.id}>
-                                          <Link
-                                            to={
-                                              submen.url
-                                                ? submen.url
-                                                : submen.title === "About Us"
-                                                ? "/about-us"
-                                                : `/${submen.title.toLowerCase().replace(/\s+/g, "-")}`
-                                            }
-                                            state={{ submenId: submen.id }}
-                                          >
-                                            {submen.title}
-                                          </Link>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </li>
-                                ));
-                              })()
-                            )}
-                          </ul>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                            {/* Subcategories */}
+                            <ul className="sub-menu">
+                              {cat.subcategories?.map((subcat) => (
+                                <li key={subcat.id}>
+                                  <strong>{subcat.title}</strong>
+                                  <ul>
+                                    {subcat.submenus?.map((submen) => (
+                                      <li key={submen.id}>
+                                        <Link
+                                          to={
+                                            submen.url
+                                              ? submen.url
+                                              : `/${submen.title
+                                                  .toLowerCase()
+                                                  .replace(/\s+/g, "-")}`
+                                          }
+                                          state={{ submenId: submen.id }}
+                                        >
+                                          {submen.title}
+                                        </Link>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </nav>
               </div>
 
+              {/* Right Icons */}
               <div className="col-lg-1 col-md-1 col-sm-2 col-3">
                 <div className="right-icon text-right">
                   <ul>
@@ -190,7 +156,7 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Full-screen Search Overlay */}
+      {/* Search Overlay */}
       {searchOpen && (
         <div
           className="search-overlay"
@@ -208,7 +174,6 @@ const Header = () => {
             transition: "opacity 0.3s ease",
           }}
         >
-          {/* Close Button */}
           <div
             onClick={() => setSearchOpen(false)}
             style={{
@@ -223,7 +188,6 @@ const Header = () => {
             &times;
           </div>
 
-          {/* Search Input */}
           <form
             onSubmit={handleSearchSubmit}
             style={{
