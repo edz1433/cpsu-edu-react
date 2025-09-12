@@ -19,7 +19,7 @@ const Home = () => {
     7: "https://aaccup.com/",
   };
 
-  const API_TOKEN = "$2a$12$LWAfyhnpYq2lrDJlsm3YA.25ivExQynX9LghVXoVinHCTf.38cQUe";
+  const API_TOKEN = import.meta.env.VITE_API_TOKEN;
 
   useEffect(() => {
     const fetchNews = async () => {
