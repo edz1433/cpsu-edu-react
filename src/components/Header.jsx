@@ -1,92 +1,44 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import axios from "axios";
+import api from "../api/axios";
 
 const Header = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [subcategories, setSubcategories] = useState([]);
+  const [submenu, setSubmenu] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
-  const API_TOKEN = "$2a$12$LWAfyhnpYq2lrDJlsm3YA.25ivExQynX9LghVXoVinHCTf.38cQUe";
-  
+
   useEffect(() => {
     const fetchMenus = async () => {
       try {
-        setLoading(true);
-        const { data } = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/webmenus`,
-          {
-            headers: {
-              Authorization: `Bearer ${API_TOKEN}`,
-            },
-          }
-        );
+        const token = import.meta.env.VITE_API_TOKEN;
+
+        const { data } = await api.get("/webmenus", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
         setCategories(data.categories || []);
       } catch (error) {
         console.error("Error fetching menus:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchMenus();
   }, []);
 
-  // Memoize the category processing to avoid recalculating on every render
-  const processedCategories = useMemo(() => {
-    return categories.map(cat => ({
-      ...cat,
-      // Pre-filter subcategories with their submenus for performance
-      processedSubcategories: cat.subcategories?.map(subcat => ({
-        ...subcat,
-        submenus: subcat.submenus || []
-      })) || []
-    }));
-  }, [categories]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim() !== "") {
       navigate(`/searchArticle?s=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery("");
       setSearchOpen(false);
     }
   };
-
-  const closeSearch = () => {
-    setSearchOpen(false);
-    setSearchQuery("");
-  };
-
-  // Generate URL for a submenu item
-  const getSubmenuUrl = (submen) => {
-    if (submen.url) return submen.url;
-    
-    // Handle special cases
-    if (submen.title === "About Us") return "/about-us";
-    
-    // Default URL generation
-    return `/${submen.title.toLowerCase().replace(/\s+/g, "-")}`;
-  };
-
-  if (loading) {
-    return (
-      <header id="header-part">
-        <div className="navigation">
-          <div className="container">
-            <div className="row">
-              <div className="col-lg-12">
-                <div className="text-center p-3">Loading navigation...</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
 
   return (
     <>
@@ -124,35 +76,61 @@ const Header = () => {
                   >
                     <div className="wrap-submenu">
                       <ul className="navbar-nav me-auto">
-                        {processedCategories.map((cat) => (
+                        {categories.map((cat) => (
                           <li
                             key={cat.id}
-                            className={`nav-item ${cat.hasgrid === 1 ? "has-grid" : ""}`}
+                            className={`nav-item ${cat.hasgrid ? "has-grid" : "active"}`}
                           >
                             <a
                               href="#"
-                              className={`${
-                                location.pathname === "/" && cat.id === 1 ? "active" : ""
-                              }`}
+                              className={location.pathname === "/" && cat.id === 1 ? "active" : ""}
                             >
-                              {cat.cat_name} 
-                              {cat.subcategories?.length > 0 && (
-                                <i className="fa fa-chevron-right fa-xs submenu-icon"></i>
-                              )}
+                              {cat.cat_name} <i className="fa fa-chevron-right fa-xs submenu-icon"></i>
                             </a>
 
-                            {cat.subcategories?.length > 0 && (
-                              <ul className="sub-menu">
-                                {cat.hasgrid === 2 ? (
-                                  // Category has subcategories (like About)
-                                  cat.processedSubcategories.map((subcat) => (
-                                    <li key={subcat.id}>
-                                      <strong>{subcat.title}</strong>
-                                      <ul>
-                                        {subcat.submenus.map((submen) => (
+                            <ul className="sub-menu">
+                              {cat.hasgrid === 2 && cat.subcategories?.length > 0 ? (
+                                // Category has subcategories
+                                cat.subcategories.map((subcat) => (
+                                  <li key={subcat.id}>
+                                    <strong>{subcat.title}</strong>
+                                    <ul>
+                                      {subcat.submenus?.map((submen) => (
+                                        <li key={submen.id}>
+                                          <Link
+                                            to={
+                                              submen.url
+                                                ? submen.url
+                                                : `/${submen.title.toLowerCase().replace(/\s+/g, "-")}`
+                                            }
+                                            state={{ submenId: submen.id }}
+                                          >
+                                            {submen.title}
+                                          </Link>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </li>
+                                ))
+                              ) : (
+                                // Category has direct submenus
+                                (() => {
+                                  const grouped = [];
+                                  for (let i = 0; i < cat.submenus.length; i += 2) {
+                                    grouped.push(cat.submenus.slice(i, i + 2));
+                                  }
+
+                                  return grouped.map((group, idx) => (
+                                    <li key={idx}>
+                                      <ul className="direct-submenu-group">
+                                        {group.map((submen) => (
                                           <li key={submen.id}>
                                             <Link
-                                              to={getSubmenuUrl(submen)}
+                                              to={
+                                                submen.url
+                                                  ? submen.url
+                                                  : `/${submen.title.toLowerCase().replace(/\s+/g, "-")}`
+                                              }
                                               state={{ submenId: submen.id }}
                                             >
                                               {submen.title}
@@ -161,41 +139,10 @@ const Header = () => {
                                         ))}
                                       </ul>
                                     </li>
-                                  ))
-                                ) : (
-                                  // Category has direct submenu items grouped in pairs
-                                  (() => {
-                                    // Get all submenus from all subcategories
-                                    const allSubmenus = cat.processedSubcategories.flatMap(
-                                      subcat => subcat.submenus
-                                    );
-                                    
-                                    // Group into pairs
-                                    const grouped = [];
-                                    for (let i = 0; i < allSubmenus.length; i += 2) {
-                                      grouped.push(allSubmenus.slice(i, i + 2));
-                                    }
-                                    
-                                    return grouped.map((group, index) => (
-                                      <li key={index}>
-                                        <ul>
-                                          {group.map((submen) => (
-                                            <li key={submen.id}>
-                                              <Link
-                                                to={getSubmenuUrl(submen)}
-                                                state={{ submenId: submen.id }}
-                                              >
-                                                {submen.title}
-                                              </Link>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </li>
-                                    ));
-                                  })()
-                                )}
-                              </ul>
-                            )}
+                                  ));
+                                })()
+                              )}
+                            </ul>
                           </li>
                         ))}
                       </ul>
@@ -210,7 +157,6 @@ const Header = () => {
                     <li>
                       <button
                         onClick={() => setSearchOpen(true)}
-                        aria-label="Open search"
                         style={{
                           background: "none",
                           border: "none",
@@ -248,9 +194,8 @@ const Header = () => {
           }}
         >
           {/* Close Button */}
-          <button
-            onClick={closeSearch}
-            aria-label="Close search"
+          <div
+            onClick={() => setSearchOpen(false)}
             style={{
               position: "absolute",
               top: "20px",
@@ -258,12 +203,10 @@ const Header = () => {
               fontSize: "30px",
               color: "#fff",
               cursor: "pointer",
-              background: "none",
-              border: "none",
             }}
           >
             &times;
-          </button>
+          </div>
 
           {/* Search Input */}
           <form
@@ -281,7 +224,6 @@ const Header = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by keyword"
-              autoFocus
               style={{
                 width: "100%",
                 padding: "15px 20px",
@@ -293,7 +235,6 @@ const Header = () => {
             />
             <button
               type="submit"
-              aria-label="Search"
               style={{
                 marginLeft: "10px",
                 padding: "15px 20px",
